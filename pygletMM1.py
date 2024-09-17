@@ -1,3 +1,17 @@
+"""
+M/M/1 Queue Simulation
+
+I need:
+
+- entry (area?)
+- queue location (position in area?)
+- service point
+- exit (area?)
+- customer
+- some vector to move stuff
+- a queue to hold customers
+
+"""
 import pyglet
 import random
 import queue
@@ -62,7 +76,11 @@ class Customer:
     ):
         self.position = spawn_position
         self.shape = shapes.Circle(
-            spawn_position.x, spawn_position.y, radius, color=BLUE, batch=batch
+            spawn_position.x,
+            spawn_position.y,
+            radius,
+            color=BLUE,
+            batch=batch,
         )
         self.target = queue_position  # Initially moving towards queue position
 
@@ -164,35 +182,42 @@ class MM1Queue:
         self.batch.draw()
 
 
-class QueueSimulationWindow(pyglet.window.Window):
-    """Main window to run the M/M/1 queue simulation."""
+class QueueSimulation:
+    """Simulation that has a Pyglet window to run the M/M/1 queue."""
 
-    def __init__(self, start_x: float, end_x: float, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        window_height = self.height
-        start_position = Vector2D(start_x, window_height // 2)
-        end_position = Vector2D(end_x, window_height // 2)
+    def __init__(self, width: int, height: int):
+        # Create the Pyglet window
+        self.window = pyglet.window.Window(
+            width=width, height=height, caption="M/M/1 Queue Simulation"
+        )
+
+        # Setup the queue system
+        window_height = self.window.height
+        window_width = self.window.width
+        start_position = Vector2D(window_width // 3, window_height // 2)
+        end_position = Vector2D(window_width // 3 * 2, window_height // 2)
         self.queue_system = MM1Queue(start_position, end_position, window_height)
 
+        # Set up event handlers
+        self.window.push_handlers(self)
+
     def on_draw(self):
-        self.clear()
+        self.window.clear()
         self.queue_system.draw()
 
     def update(self, dt: float):
         self.queue_system.update(dt)
 
+    def run(self):
+        # Schedule the update function to run every 1/60 of a second
+        pyglet.clock.schedule_interval(self.update, 1 / 60)
 
-# Create a fullscreen window
-window = QueueSimulationWindow(
-    start_x=0,  # Start position at the queue
-    end_x=700,  # End position (server) of the queue
-    fullscreen=True,
-    caption="M/M/1 Queue Simulation",
-)
+        # Start the Pyglet application
+        pyglet.app.run()
 
-# Schedule the update function to run every 1/60 of a second
-pyglet.clock.schedule_interval(window.update, 1 / 60)
 
-# Start the Pyglet application
-if __name__ == "__main__":
-    pyglet.app.run()
+# Create the simulation instance
+simulation = QueueSimulation(width=1280, height=720)
+
+# Run the simulation
+simulation.run()
