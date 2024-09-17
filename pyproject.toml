@@ -8,6 +8,7 @@ dependencies = [
     "ipykernel>=6.29.5",
     "matplotlib>=3.9.2",
     "polars>=1.7.1",
+    "pydantic-settings>=2.5.2",
     "pyglet>=2.0.17",
 ]
 

@@ -1,0 +1,13 @@
+{
+  "arrival_rate": 0.5,
+  "service_rate": 0.3333,
+  "move_speed": 200,
+  "window_width": 1280,
+  "window_height": 720,
+  "queue_max_size": 10,
+  "customer_radius": 20,
+  "queue_position_offset": 50,
+  "queue_color": [255, 0, 0],
+  "server_color": [0, 255, 0],
+  "customer_color": [0, 0, 255]
+}

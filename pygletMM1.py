@@ -1,32 +1,46 @@
-"""
-M/M/1 Queue Simulation
-
-I need:
-
-- entry (area?)
-- queue location (position in area?)
-- service point
-- exit (area?)
-- customer
-- some vector to move stuff
-- a queue to hold customers
-
-"""
 import pyglet
 import random
 import queue
 from pyglet import shapes
 from dataclasses import dataclass
 from math import sqrt, atan2, degrees
+from pydantic_settings import SettingsConfigDict, BaseSettings
+import json
+from typing import Tuple
 
-# Constants for queue behavior
-ARRIVAL_RATE = 1 / 2  # Average of 2 seconds between arrivals (lambda)
-SERVICE_RATE = 1 / 3  # Average of 3 seconds service time (mu)
-MOVE_SPEED = 200  # Speed at which the customers move to the server
 
-BLUE = (0, 0, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
+# Step 1: Define Pydantic settings model
+class SimulationSettings(BaseSettings):
+    arrival_rate: float
+    service_rate: float
+    move_speed: int
+    window_width: int
+    window_height: int
+    queue_max_size: int
+    customer_radius: int
+    queue_position_offset: int
+    queue_color: tuple[int, int, int]  # Now a tuple
+    server_color: tuple[int, int, int]  # Now a tuple
+    customer_color: tuple[int, int, int]  # Now a tuple
+
+    @classmethod
+    def from_json(cls, json_file: str) -> "SimulationSettings":
+        with open(json_file, "r") as file:
+            settings_data = json.load(file)
+        # Convert lists to tuples
+        settings_data["queue_color"] = tuple(settings_data["queue_color"])
+        settings_data["server_color"] = tuple(settings_data["server_color"])
+        settings_data["customer_color"] = tuple(settings_data["customer_color"])
+        return cls(**settings_data)
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+
+# Step 2: Load settings from a JSON file
+def load_settings_from_json(json_file: str) -> SimulationSettings:
+    with open(json_file, "r") as file:
+        settings_data = json.load(file)
+    return SimulationSettings(**settings_data)
 
 
 @dataclass
@@ -73,25 +87,26 @@ class Customer:
         queue_position: Vector2D,
         radius: float,
         batch: pyglet.graphics.Batch,
+        color: Tuple[int],
     ):
         self.position = spawn_position
         self.shape = shapes.Circle(
             spawn_position.x,
             spawn_position.y,
             radius,
-            color=BLUE,
+            color=color,
             batch=batch,
         )
         self.target = queue_position  # Initially moving towards queue position
 
-    def move_toward(self, target: Vector2D, dt: float) -> bool:
+    def move_toward(self, target: Vector2D, dt: float, move_speed: float) -> bool:
         """Move the customer toward the target position."""
         direction = target - self.position  # Calculate direction vector
         distance = direction.magnitude()  # Calculate distance to target
 
         if distance > 0:
             move_vector = (
-                direction.normalize() * MOVE_SPEED * dt
+                direction.normalize() * move_speed * dt
             )  # Move in the direction of the target
             self.position += move_vector  # Update position
             self.shape.x, self.shape.y = self.position.x, self.position.y
@@ -108,7 +123,9 @@ class MM1Queue:
         start_position: Vector2D,
         end_position: Vector2D,
         window_height: float,
+        settings: SimulationSettings,
     ):
+        self.settings = settings
         self.start_position = start_position  # Queue start position (Vector2D)
         self.end_position = end_position  # Queue end position (Vector2D)
         self.spawn_position = Vector2D(
@@ -117,7 +134,7 @@ class MM1Queue:
         self.queue: queue.Queue[Customer] = queue.Queue()  # FIFO queue for customers
         self.server = None  # The customer currently being served
         self.batch = pyglet.graphics.Batch()  # Batch for efficient drawing
-        self.next_arrival_time = random.expovariate(ARRIVAL_RATE)
+        self.next_arrival_time = random.expovariate(self.settings.arrival_rate)
         self.next_service_time = None
 
         # Shapes for the start and end points (visualized)
@@ -126,7 +143,7 @@ class MM1Queue:
             self.start_position.y - 25,
             10,
             50,
-            color=RED,
+            color=self.settings.queue_color,
             batch=self.batch,
         )
         self.server_box = shapes.Rectangle(
@@ -134,17 +151,25 @@ class MM1Queue:
             self.end_position.y - 25,
             50,
             50,
-            color=GREEN,
+            color=self.settings.server_color,
             batch=self.batch,
         )
 
     def add_customer(self):
         """Add a new customer to the queue."""
-        if self.queue.qsize() < 10:  # Limit queue size for visualization
+        if self.queue.qsize() < self.settings.queue_max_size:  # Limit queue size
             position_in_queue = Vector2D(
-                self.start_position.x - self.queue.qsize() * 50, self.start_position.y
+                self.start_position.x
+                - self.queue.qsize() * self.settings.queue_position_offset,
+                self.start_position.y,
             )
-            customer = Customer(self.spawn_position, position_in_queue, 20, self.batch)
+            customer = Customer(
+                self.spawn_position,
+                position_in_queue,
+                self.settings.customer_radius,
+                self.batch,
+                self.settings.customer_color,
+            )
             self.queue.put(customer)
 
     def update(self, dt: float):
@@ -153,17 +178,19 @@ class MM1Queue:
         self.next_arrival_time -= dt
         if self.next_arrival_time <= 0:
             self.add_customer()
-            self.next_arrival_time = random.expovariate(ARRIVAL_RATE)
+            self.next_arrival_time = random.expovariate(self.settings.arrival_rate)
 
         # Handle serving customers
         if self.server is None and not self.queue.empty():
             self.server = self.queue.get()
             self.server.target = self.end_position  # Move customer to server
-            self.next_service_time = random.expovariate(SERVICE_RATE)
+            self.next_service_time = random.expovariate(self.settings.service_rate)
 
         if self.server:
             # Move the customer to the server smoothly
-            if self.server.move_toward(self.server.target, dt):
+            if self.server.move_toward(
+                self.server.target, dt, self.settings.move_speed
+            ):
                 self.next_service_time -= dt
                 if self.next_service_time <= 0:
                     # Customer has been served
@@ -173,9 +200,10 @@ class MM1Queue:
         for i in range(self.queue.qsize()):
             customer = self.queue.queue[i]
             customer.target = Vector2D(
-                self.start_position.x - i * 50, self.start_position.y
+                self.start_position.x - i * self.settings.queue_position_offset,
+                self.start_position.y,
             )
-            customer.move_toward(customer.target, dt)
+            customer.move_toward(customer.target, dt, self.settings.move_speed)
 
     def draw(self):
         """Draw all elements in the system."""
@@ -185,10 +213,12 @@ class MM1Queue:
 class QueueSimulation:
     """Simulation that has a Pyglet window to run the M/M/1 queue."""
 
-    def __init__(self, width: int, height: int):
+    def __init__(self, settings: SimulationSettings):
         # Create the Pyglet window
         self.window = pyglet.window.Window(
-            width=width, height=height, caption="M/M/1 Queue Simulation"
+            width=settings.window_width,
+            height=settings.window_height,
+            caption="M/M/1 Queue Simulation",
         )
 
         # Setup the queue system
@@ -196,7 +226,12 @@ class QueueSimulation:
         window_width = self.window.width
         start_position = Vector2D(window_width // 3, window_height // 2)
         end_position = Vector2D(window_width // 3 * 2, window_height // 2)
-        self.queue_system = MM1Queue(start_position, end_position, window_height)
+        self.queue_system = MM1Queue(
+            start_position,
+            end_position,
+            window_height,
+            settings,
+        )
 
         # Set up event handlers
         self.window.push_handlers(self)
@@ -216,8 +251,11 @@ class QueueSimulation:
         pyglet.app.run()
 
 
+# Step 4: Load settings and start the simulation
+settings = load_settings_from_json("simulation_config.json")
+
 # Create the simulation instance
-simulation = QueueSimulation(width=1280, height=720)
+simulation = QueueSimulation(settings)
 
 # Run the simulation
 simulation.run()
