@@ -106,8 +106,8 @@ def plotwithnobalkers(
 def plotwithbalkers(
     selfish_queue_lengths: Sequence[int],
     optimal_queue_lengths: Sequence[int],
-    selfish_system_states: Sequence[int],
-    optimal_system_states: Sequence[int],
+    selfish_system_states: Sequence[float],
+    optimal_system_states: Sequence[float],
     time_points: Sequence[float],
     save_fig: bool,
     file_name: Path,
@@ -496,8 +496,8 @@ class OptimalPlayer(Player):
         self,
         arrival_rate: float,
         service_rate: float,
-        queue: Any,
-        server: Any,
+        queue: Queue,
+        server: Server,
         speed: int,
         naor_threshold: bool | int,
     ):
@@ -562,7 +562,7 @@ class Sim:
         service_rate: float,
         speed: int,
         cost_of_balking: Literal[False] | list[float] = False,
-    ):
+    ) -> None:
         ##################
         bLx = -10  # This sets the size of the canvas (I think that messing with this could increase speed of turtles)
         bLy = -110
@@ -596,7 +596,7 @@ class Sim:
             )
         self.system_state_dict: dict[float, float | list[float]] = {}
 
-    def newplayer(self):
+    def newplayer(self) -> None:
         """
         A method to generate a new player (takes in to account cost of balking). So if no cost of balking is passed: only generates a basic player. If a float is passed as cost of balking: generates selfish players with that float as worth of service. If a list is passed then it creates a player (either selfish or optimal) according to a random selection.
 
@@ -748,10 +748,10 @@ class Sim:
             f"arrival_rate={self.arrival_rate}-mu={self.service_rate}-T={self.simulation_time}-cost={self.cost_of_balking}.pdf"
         )
         if self.cost_of_balking:
-            selfish_queue_lengths: list[Any] = []
-            optimal_queue_lengths: list[Any] = []
-            selfish_system_states: list[Any] = []
-            optimal_system_states: list[Any] = []
+            selfish_queue_lengths: Sequence[int] = []
+            optimal_queue_lengths: Sequence[int] = []
+            selfish_system_states: Sequence[float] = []
+            optimal_system_states: Sequence[float] = []
             time_points: Sequence[float] = []
             assert isinstance(
                 self.system_state_dict, dict
