@@ -1,3 +1,16 @@
+"""
+M/M/1 Queue Simulation
+
+I need:
+
+- entry (area?)
+- queue location (position in area?)
+- service point
+- exit (area?)
+- customer
+- some vector to move stuff
+- a queue to hold customers
+"""
 import pyglet
 import random
 import queue
