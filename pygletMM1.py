@@ -154,7 +154,8 @@ class MM1Queue:
         self.exit_position = Vector2D(window_width - 50, 50)
         self.queue: queue.Queue[Customer] = queue.Queue()  # FIFO queue for customers
         self.server = None  # The customer currently being served
-        self.exiting_customers: list[Customer] = []  # List to hold customers moving to the exit
+        # List to hold customers moving to the exit
+        self.exiting_customers: list[Customer] = []
         self.batch = pyglet.graphics.Batch()  # Batch for efficient drawing
         self.next_arrival_time = random.expovariate(self.settings.arrival_rate)
         self.next_service_time = None
@@ -246,16 +247,12 @@ class MM1Queue:
                 self.settings.customer_color,
             )
             self.queue.put(customer)
-            # Reset the waiting time when a customer is added
-            self.waiting_time = 0.0
 
     def update(self, dt: float) -> None:
         """Update the queue system and move customers."""
         # Update the next arrival timer
         self.next_arrival_time -= dt
-        self.next_arrival_time_label.text = (
-            f"next: {self.next_arrival_time:.2f}s"
-        )
+        self.next_arrival_time_label.text = f"next: {self.next_arrival_time:.2f}s"
 
         if self.next_arrival_time <= 0:
             self.add_customer()
@@ -268,6 +265,8 @@ class MM1Queue:
             self.server = self.queue.get()
             self.server.target = self.end_position  # Move customer to server
             self.next_service_time = random.expovariate(self.settings.service_rate)
+            # Reset the waiting time when the customer leaves the queue (gets served)
+            self.waiting_time = 0.0
 
         if self.server:
             # Move the customer to the server smoothly
@@ -276,7 +275,9 @@ class MM1Queue:
             ):
                 self.next_service_time -= dt
                 # Update the timer label with remaining service time
-                self.server_timer_label.text = f"{self.next_service_time:.2f} s"
+                self.server_timer_label.text = (
+                    f"served in: {self.next_service_time:.2f}s"
+                )
 
                 if self.next_service_time <= 0:
                     # Customer has been served; now move to the exit
@@ -295,9 +296,7 @@ class MM1Queue:
         # Update waiting time for customers in the queue
         if not self.queue.empty():
             self.waiting_time += dt
-            self.queue_waiting_time_label.text = (
-                f"waiting {self.waiting_time:.2f}s"
-            )
+            self.queue_waiting_time_label.text = f"waiting {self.waiting_time:.2f}s"
 
         # Update customers in the queue to move forward if needed
         for i in range(self.queue.qsize()):
@@ -317,12 +316,23 @@ class QueueSimulation:
     """Simulation that has a Pyglet window to run the M/M/1 queue."""
 
     def __init__(self, settings: SimulationSettings):
+        # Get the display and screen size
+        display = pyglet.canvas.Display()
+        screen = display.get_default_screen()
+
         # Create the Pyglet window
         self.window = pyglet.window.Window(
             width=settings.window_width,
             height=settings.window_height,
             caption="M/M/1 Queue Simulation",
         )
+
+        # Calculate the position to center the window on the screen
+        window_x = (screen.width - settings.window_width) // 2
+        window_y = (screen.height - settings.window_height) // 2
+
+        # Set the window's location to the center of the screen
+        self.window.set_location(window_x, window_y)
 
         # Setup the queue system
         window_height = self.window.height
