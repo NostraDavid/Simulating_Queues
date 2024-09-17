@@ -3,6 +3,7 @@ import random
 import queue
 from pyglet import shapes
 from dataclasses import dataclass
+from math import sqrt, atan2, degrees
 
 # Constants for queue behavior
 ARRIVAL_RATE = 1 / 2  # Average of 2 seconds between arrivals (lambda)
@@ -16,17 +17,39 @@ GREEN = (0, 255, 0)
 
 @dataclass
 class Vector2D:
-    x: float
-    y: float
+    x: float = 0.0
+    y: float = 0.0
 
-    def move_toward(self, target: "Vector2D", speed: float, dt: float) -> bool:
-        """Move this vector toward the target vector at the given speed."""
-        if self.x < target.x:
-            self.x += speed * dt
-        elif self.x > target.x:
-            self.x -= speed * dt
+    def __add__(self, other: "Vector2D") -> "Vector2D":
+        """Add two vectors."""
+        return Vector2D(self.x + other.x, self.y + other.y)
 
-        return abs(self.x - target.x) < 1e-2  # Consider it reached if very close
+    def __sub__(self, other: "Vector2D") -> "Vector2D":
+        """Subtract one vector from another."""
+        return Vector2D(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, scalar: float) -> "Vector2D":
+        """Multiply vector by a scalar."""
+        return Vector2D(self.x * scalar, self.y * scalar)
+
+    def dot(self, other: "Vector2D") -> float:
+        """Dot product of two vectors."""
+        return self.x * other.x + self.y * other.y
+
+    def magnitude(self) -> float:
+        """Magnitude (length) of the vector."""
+        return sqrt(self.x**2 + self.y**2)
+
+    def normalize(self) -> "Vector2D":
+        """Return a normalized vector (unit vector)."""
+        mag = self.magnitude()
+        if mag == 0:
+            return Vector2D(0, 0)
+        return self * (1 / mag)
+
+    def angle(self) -> float:
+        """Return the angle of the vector in degrees from the positive x-axis."""
+        return degrees(atan2(self.y, self.x))
 
 
 class Customer:
@@ -39,9 +62,18 @@ class Customer:
 
     def move_toward(self, target: Vector2D, dt: float) -> bool:
         """Move the customer toward the target position."""
-        reached = self.position.move_toward(target, MOVE_SPEED, dt)
-        self.shape.x = self.position.x
-        return reached
+        direction = target - self.position  # Calculate direction vector
+        distance = direction.magnitude()  # Calculate distance to target
+
+        if distance > 0:
+            move_vector = (
+                direction.normalize() * MOVE_SPEED * dt
+            )  # Move in the direction of the target
+            self.position += move_vector  # Update position
+            self.shape.x, self.shape.y = self.position.x, self.position.y
+
+        # Check if we have reached the target
+        return distance < 1.0  # Consider target reached if within 1 pixel
 
 
 class MM1Queue:
@@ -52,9 +84,14 @@ class MM1Queue:
         start_x: float,
         end_x: float,
         y: float,
+        window_height: float,
     ):
-        self.start_position = Vector2D(start_x, y)
-        self.end_position = Vector2D(end_x, y)
+        self.start_position = Vector2D(
+            start_x, window_height - y
+        )  # Spawn at upper-left corner
+        self.end_position = Vector2D(
+            end_x, window_height - y
+        )  # Server is horizontally across
         self.queue: queue.Queue[Customer] = queue.Queue()  # FIFO queue for customers
         self.server = None  # The customer currently being served
         self.batch = pyglet.graphics.Batch()  # Batch for efficient drawing
@@ -129,7 +166,7 @@ class QueueSimulationWindow(pyglet.window.Window):
 
     def __init__(self, start_x: float, end_x: float, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.queue_system = MM1Queue(start_x, end_x, self.height // 2)
+        self.queue_system = MM1Queue(start_x, end_x, self.height // 2, self.height)
 
     def on_draw(self):
         self.clear()
@@ -141,7 +178,7 @@ class QueueSimulationWindow(pyglet.window.Window):
 
 # Create a fullscreen window
 window = QueueSimulationWindow(
-    start_x=300,  # Start position of the queue
+    start_x=0,  # Start position at the upper-left corner (x = 0)
     end_x=700,  # End position (server) of the queue
     fullscreen=True,
     caption="M/M/1 Queue Simulation",
