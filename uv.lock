@@ -666,6 +666,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyglet"
+version = "2.0.17"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/23/226b90dae097b646da9e1713302770c6cabc8af43b21e583910a484728d6/pyglet-2.0.17.tar.gz", hash = "sha256:50c533c1a7cafdccccf43041338ad921ae26866e9871b4f12bf608500632900a", size = 6472212 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c9/e7/c0c5e4f224a4e04249c0a0a1dd50c29987ceff4e760a0cd8c0e653bb128e/pyglet-2.0.17-py3-none-any.whl", hash = "sha256:c881615a5bf14455af36a0915fd9dad0069da904ab5e0ec19b4d6cdfcf1e84c2", size = 936559 },
+]
+
+[[package]]
 name = "pygments"
 version = "2.18.0"
 source = { registry = "https://pypi.org/simple" }
@@ -685,7 +694,7 @@ wheels = [
 
 [[package]]
 name = "pyre-check"
-version = "0.9.22"
+version = "0.9.19"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -699,10 +708,10 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "typing-inspect" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fd/94/bbbb7b51310bc17fd80453f17c72fdf5079dbfe97558c511295be50a4880/pyre-check-0.9.22.tar.gz", hash = "sha256:e082f926dff71661959535c3936fca5ad40a44858b5fd3e99009a616a1b57083", size = 22431682 }
+sdist = { url = "https://files.pythonhosted.org/packages/62/91/ffb504dcede8bdfd40843d54784f853694a41cc8299d5181b15fa9ed58b9/pyre-check-0.9.19.tar.gz", hash = "sha256:0c6b24c9c0950588dab056a13f25322a76e302b575bee479a3ad738d74c4a135", size = 24278688 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/b1/42668886e6ed9f65e009dcd215ee184dac78b1e645b7ddca1f9492a67aae/pyre_check-0.9.22-py3-none-macosx_10_11_x86_64.whl", hash = "sha256:4bbd61dad5669dfef00e875bf8a573866595ecbd8240f595339a9781e8a1e22e", size = 23175106 },
-    { url = "https://files.pythonhosted.org/packages/0c/1a/655ddae10ad37b4cdb33205aed45ba26f568e9de5ab9cb14776e95bddcb4/pyre_check-0.9.22-py3-none-manylinux1_x86_64.whl", hash = "sha256:d331e2687e194fa22505e0724b1536e61bf06fddc5416d7b83d542d2270c91ce", size = 44959761 },
+    { url = "https://files.pythonhosted.org/packages/29/66/3db6133ad965690a57380a820cb1b6903f22422ecc8936c20edc1cdb2374/pyre_check-0.9.19-py3-none-macosx_10_11_x86_64.whl", hash = "sha256:1189a5ce672684ed79929783e80483ed4ed958e4f94c8f6fbe2dae306f2fdf6a", size = 26082339 },
+    { url = "https://files.pythonhosted.org/packages/89/d4/ad8b71553470d6120593aee44ff01376b4a92c1da7a18b62dada34c0c83c/pyre_check-0.9.19-py3-none-manylinux1_x86_64.whl", hash = "sha256:de580f56e6241d792ec3b164b557610023b40914f0506cf166189989e2d13d0c", size = 46497046 },
 ]
 
 [[package]]
@@ -852,6 +861,7 @@ dependencies = [
     { name = "ipykernel" },
     { name = "matplotlib" },
     { name = "polars" },
+    { name = "pyglet" },
 ]
 
 [package.dev-dependencies]
@@ -869,6 +879,7 @@ requires-dist = [
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "matplotlib", specifier = ">=3.9.2" },
     { name = "polars", specifier = ">=1.7.1" },
+    { name = "pyglet", specifier = ">=2.0.17" },
 ]
 
 [package.metadata.requires-dev]
@@ -877,7 +888,7 @@ dev = [
     { name = "matplotlib-stubs", specifier = ">=0.2.0" },
     { name = "mypy", specifier = ">=1.11.2" },
     { name = "pip", specifier = ">=24.2" },
-    { name = "pyre-check", specifier = ">=0.9.22" },
+    { name = "pyre-check", specifier = "==0.9.19" },
     { name = "ruff", specifier = ">=0.6.5" },
 ]
 
