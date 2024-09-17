@@ -18,7 +18,7 @@ I also added a `pyproject.toml` file to track the dependencies, using Astral's
 I'll presume you're running on `Linux` with `vscode` as editor, as it supports
 Jupyter notebooks very well.
 
-## Setup
+## Virtual Environment Setup
 
 To create a virtual environment, just run `uv sync`. No need to install a
 certain Python version; `uv` will take care of that.
