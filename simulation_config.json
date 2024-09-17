@@ -11,5 +11,6 @@
   "server_color": [0, 255, 0],
   "customer_color": [0, 0, 255],
   "entry_color": [0, 255, 255],
-  "exit_color": [255, 255, 0]
+  "exit_color": [255, 255, 0],
+  "monitor_index": 0
 }

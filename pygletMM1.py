@@ -37,6 +37,8 @@ class SimulationSettings(BaseSettings):
     customer_color: tuple[int, int, int]
     entry_color: tuple[int, int, int]
     exit_color: tuple[int, int, int]
+    # Add this setting to select the monitor (0 = primary, 1 = second, etc.)
+    monitor_index: int
 
     @classmethod
     def from_json(cls, json_file: str) -> "SimulationSettings":
@@ -316,22 +318,32 @@ class QueueSimulation:
     """Simulation that has a Pyglet window to run the M/M/1 queue."""
 
     def __init__(self, settings: SimulationSettings):
-        # Get the display and screen size
+        # Get the display and available screens
         display = pyglet.canvas.Display()
-        screen = display.get_default_screen()
+        screens = display.get_screens()
+
+        # Check if the monitor index is valid
+        if settings.monitor_index >= len(screens):
+            raise ValueError(
+                f"Monitor index {settings.monitor_index} is out of range. Available monitors: {len(screens)}"
+            )
+
+        # Get the selected monitor (primary or secondary)
+        selected_screen = screens[settings.monitor_index]
 
         # Create the Pyglet window
         self.window = pyglet.window.Window(
             width=settings.window_width,
             height=settings.window_height,
             caption="M/M/1 Queue Simulation",
+            screen=selected_screen,  # This ensures the window opens on the selected monitor
         )
 
-        # Calculate the position to center the window on the screen
-        window_x = (screen.width - settings.window_width) // 2
-        window_y = (screen.height - settings.window_height) // 2
+        # Calculate the position to center the window on the selected screen
+        window_x = selected_screen.x + (selected_screen.width - settings.window_width) // 2
+        window_y = selected_screen.y + (selected_screen.height - settings.window_height) // 2
 
-        # Set the window's location to the center of the screen
+        # Set the window's location to the center of the selected screen
         self.window.set_location(window_x, window_y)
 
         # Setup the queue system
