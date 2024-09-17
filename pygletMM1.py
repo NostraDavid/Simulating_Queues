@@ -53,12 +53,18 @@ class Vector2D:
 
 
 class Customer:
-    def __init__(self, position: Vector2D, radius: float, batch: pyglet.graphics.Batch):
-        self.position = position
+    def __init__(
+        self,
+        spawn_position: Vector2D,
+        queue_position: Vector2D,
+        radius: float,
+        batch: pyglet.graphics.Batch,
+    ):
+        self.position = spawn_position
         self.shape = shapes.Circle(
-            position.x, position.y, radius, color=BLUE, batch=batch
+            spawn_position.x, spawn_position.y, radius, color=BLUE, batch=batch
         )
-        self.target = position
+        self.target = queue_position  # Initially moving towards queue position
 
     def move_toward(self, target: Vector2D, dt: float) -> bool:
         """Move the customer toward the target position."""
@@ -88,10 +94,11 @@ class MM1Queue:
     ):
         self.start_position = Vector2D(
             start_x, window_height - y
-        )  # Spawn at upper-left corner
-        self.end_position = Vector2D(
-            end_x, window_height - y
-        )  # Server is horizontally across
+        )  # Position of the queue
+        self.end_position = Vector2D(end_x, window_height - y)  # Server position
+        self.spawn_position = Vector2D(
+            0, window_height
+        )  # Spawn in the upper-left corner
         self.queue: queue.Queue[Customer] = queue.Queue()  # FIFO queue for customers
         self.server = None  # The customer currently being served
         self.batch = pyglet.graphics.Batch()  # Batch for efficient drawing
@@ -119,11 +126,10 @@ class MM1Queue:
     def add_customer(self):
         """Add a new customer to the queue."""
         if self.queue.qsize() < 10:  # Limit queue size for visualization
-            position = Vector2D(self.start_position.x, self.start_position.y)
-            customer = Customer(position, 20, self.batch)
-            customer.target = Vector2D(
+            position_in_queue = Vector2D(
                 self.start_position.x - self.queue.qsize() * 50, self.start_position.y
             )
+            customer = Customer(self.spawn_position, position_in_queue, 20, self.batch)
             self.queue.put(customer)
 
     def update(self, dt: float):
@@ -178,7 +184,7 @@ class QueueSimulationWindow(pyglet.window.Window):
 
 # Create a fullscreen window
 window = QueueSimulationWindow(
-    start_x=0,  # Start position at the upper-left corner (x = 0)
+    start_x=0,  # Start position at the queue
     end_x=700,  # End position (server) of the queue
     fullscreen=True,
     caption="M/M/1 Queue Simulation",
