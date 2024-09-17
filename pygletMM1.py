@@ -193,6 +193,18 @@ class MM1Queue:
             batch=self.batch,
         )
 
+        # Timer label above the server box
+        self.server_timer_label = pyglet.text.Label(
+            "",
+            font_name="Arial",
+            font_size=14,
+            x=self.end_position.x,
+            y=self.end_position.y + 40,  # Position the label above the server box
+            anchor_x="center",
+            anchor_y="center",
+            batch=self.batch,
+        )
+
     def add_customer(self):
         """Add a new customer to the queue."""
         if self.queue.qsize() < self.settings.queue_max_size:  # Limit queue size
@@ -232,11 +244,16 @@ class MM1Queue:
                 self.server.target, dt, self.settings.move_speed
             ):
                 self.next_service_time -= dt
+                # Update the timer label with remaining service time
+                self.server_timer_label.text = f"{self.next_service_time:.2f} s"
+
                 if self.next_service_time <= 0:
                     # Customer has been served; now move to the exit
                     self.server.target = self.exit_position
                     self.exiting_customers.append(self.server)
                     self.server = None
+                    # Clear the timer when done
+                    self.server_timer_label.text = ""
 
         # Update exiting customers moving toward the exit
         for customer in self.exiting_customers[:]:  # Iterate over a copy of the list
