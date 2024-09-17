@@ -10,6 +10,7 @@ import random
 import csv
 from dataclasses import dataclass
 from statistics import mean
+from pathlib import Path
 
 
 @dataclass
@@ -29,15 +30,20 @@ class Customer:
         return self.service_start_date - self.arrival_date
 
 
-def neg_exp(λ: int) -> float:
+def neg_exp(arrival_rate: int) -> float:
     """a simple function to sample from negative exponential."""
-    return random.expovariate(λ)
+    return random.expovariate(arrival_rate)
 
 
 def simulation(
-    simulation_time: int, arrival_rate: int, service_rate: int
+    simulation_time: int,
+    arrival_rate: int,
+    service_rate: int,
 ) -> tuple[list[Customer], float]:
-    """Run the simulation and return the generated customers and the end time of the simulation"""
+    """
+    Run the simulation and return the generated customers and the end time of
+    the simulation.
+    """
     # Initialise clock
     tick = 0
 
@@ -108,10 +114,10 @@ def save_to_csv(
     service_rate: int,
     simulation_time: int,
 ) -> None:
-    with open(
-        file=f"MM1Q-output-({arrival_rate},{service_rate},{simulation_time}).csv",
-        mode="wb",
-    ) as outfile:
+    file_name = Path(
+        f"MM1Q-output-({arrival_rate},{service_rate},{simulation_time}).csv"
+    )
+    with file_name.open(mode="w") as outfile:
         output = csv.writer(outfile)
         # write the header
         output.writerow(

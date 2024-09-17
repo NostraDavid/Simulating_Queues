@@ -21,10 +21,16 @@ There are various objects that allow for the simulation and demonstration of eme
 
 import argparse
 from collections.abc import Sequence
-from turtle import Turtle, setworldcoordinates  # Commands needed from Turtle
+from turtle import Turtle, setworldcoordinates
 from random import expovariate as randexp, random  # Pseudo random number generation
-import sys  # Use to write to out
+import sys  # Use to write to stdout
 from typing import Any, Iterator, Literal
+from pathlib import Path
+
+
+def clamp(smallest: int, n: int, largest: int) -> int:
+    """clamp n to the range [smallest, largest]."""
+    return max(smallest, min(n, largest))
 
 
 def mean(lst: Sequence[float]) -> float | Literal[False]:
@@ -56,7 +62,7 @@ def plotwithnobalkers(
     system_states: list[float],
     time_points: list[float],
     save_fig: bool,
-    string: str,
+    file_name: Path,
 ) -> None:
     """
     A function to plot histograms and timeseries.
@@ -70,25 +76,29 @@ def plotwithnobalkers(
         import matplotlib.pyplot as plt
     except Exception:
         sys.stdout.write(
-            "matplotlib does not seem to be installed: no  plots can be produced."
+            "matplotlib does not seem to be installed: no plots can be produced."
         )
         return
 
-    plt.figure(1)
+    plt.figure(1, figsize=(8, 6))
     plt.subplot(221)
     plt.hist(queue_lengths, density=True, bins=min(20, max(queue_lengths)))
-    plt.title("Queue length")
+    plt.xlabel("Queue length")
+    plt.ylabel("Frequency")
     plt.subplot(222)
     plt.hist(system_states, density=True, bins=min(20, max(system_states)))
-    plt.title("System state")
+    plt.xlabel("System state")
+    plt.ylabel("Frequency")
     plt.subplot(223)
     plt.plot(time_points, movingaverage(queue_lengths))
-    plt.title("Mean queue length")
+    plt.xlabel("Time")
+    plt.ylabel("Mean queue length")
     plt.subplot(224)
     plt.plot(time_points, movingaverage(system_states))
-    plt.title("Mean system state")
+    plt.xlabel("Time")
+    plt.ylabel("Mean system state")
     if save_fig:
-        plt.savefig(string)
+        plt.savefig(file_name)
     else:
         plt.show()
 
@@ -100,7 +110,7 @@ def plotwithbalkers(
     optimal_system_states: Sequence[int],
     time_points: Sequence[float],
     save_fig: bool,
-    string: str,
+    file_name: Path,
 ):
     """
     A function to plot histograms and timeseries when you have two types of players
@@ -112,7 +122,7 @@ def plotwithbalkers(
         - optimal_system_states
         - time_points
         - save_fig
-        - string
+        - file_name
     """
     try:
         import matplotlib.pyplot as plt
@@ -192,7 +202,7 @@ def plotwithbalkers(
     )
     plt.subplots_adjust(bottom=0.15)
     if save_fig:
-        plt.savefig(string)
+        plt.savefig(file_name)
     else:
         plt.show()
 
@@ -550,7 +560,7 @@ class Sim:
         simulation_time: float,
         arrival_rate: float,
         service_rate: float,
-        speed: int = 6,
+        speed: int,
         cost_of_balking: Literal[False] | list[float] = False,
     ):
         ##################
@@ -574,7 +584,7 @@ class Sim:
         self.queue = Queue(qposition)
         self.queue_length_dict: dict[float, int | list[int]] = {}
         self.server = Server([qposition[0] + 50, qposition[1]])
-        self.speed: int = max(0, min(10, speed))
+        self.speed: int = clamp(0, speed, 10)
         self.naor_threshold: bool | int = False
         if type(cost_of_balking) is list:
             self.naor_threshold = naor_threshold(
@@ -734,12 +744,9 @@ class Sim:
         """
         Plot the data
         """
-        string = "arrival_rate=%s-mu=%s-T=%s-cost=%s.pdf" % (
-            self.arrival_rate,
-            self.service_rate,
-            self.simulation_time,
-            self.cost_of_balking,
-        )  # An identifier
+        file_name = Path(
+            f"arrival_rate={self.arrival_rate}-mu={self.service_rate}-T={self.simulation_time}-cost={self.cost_of_balking}.pdf"
+        )
         if self.cost_of_balking:
             selfish_queue_lengths: list[Any] = []
             optimal_queue_lengths: list[Any] = []
@@ -766,7 +773,7 @@ class Sim:
                 optimal_system_states,
                 time_points,
                 save_fig,
-                string,
+                file_name,
             )
         else:
             queue_lengths: list[float] = []
@@ -778,7 +785,11 @@ class Sim:
                     system_states.append(self.system_state_dict[t])
                     time_points.append(t)
             plotwithnobalkers(
-                queue_lengths, system_states, time_points, save_fig, string
+                queue_lengths,
+                system_states,
+                time_points,
+                save_fig,
+                file_name,
             )
 
     def printsummary(self, warmup: float = 0):
@@ -1026,16 +1037,25 @@ if __name__ == "__main__":
         default=False,
         type=bool,
     )
+    parser.add_argument(
+        "-S",
+        action="store",
+        dest="speed",
+        help="int between 1 and 10 for the speed of the simulation; 0 for no animation",
+        default=10,
+        type=int,
+    )
     inputs: argparse.Namespace = parser.parse_args()
     arrival_rate: float = inputs.arrival_rate
     service_rate: float = inputs.service_rate
     simulation_time: float = inputs.simulation_time
     warmup: float = inputs.warmup
     save_fig: bool = inputs.save_fig
+    speed: int = inputs.speed
     cost_of_balking: bool | list[float] = inputs.cost_of_balking
     if cost_of_balking:
         cost_of_balking = [inputs.prob_of_selfish, inputs.cost_of_balking]
-    q = Sim(simulation_time, arrival_rate, service_rate, 10, cost_of_balking)
+    q = Sim(simulation_time, arrival_rate, service_rate, speed, cost_of_balking)
     q.run()
     q.printsummary(warmup=warmup)
     q.plot(save_fig)
