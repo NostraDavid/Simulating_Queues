@@ -158,6 +158,7 @@ class MM1Queue:
         self.batch = pyglet.graphics.Batch()  # Batch for efficient drawing
         self.next_arrival_time = random.expovariate(self.settings.arrival_rate)
         self.next_service_time = None
+        self.waiting_time = 0.0  # Initialize the waiting time to 0
 
         # Shapes for the start and end points (visualized)
         self.queue_entry = shapes.Rectangle(
@@ -205,6 +206,30 @@ class MM1Queue:
             batch=self.batch,
         )
 
+        # Timer label above the queue to show waiting time
+        self.queue_waiting_time_label = pyglet.text.Label(
+            "",
+            font_name="Arial",
+            font_size=14,
+            x=self.start_position.x,
+            y=self.start_position.y + 40,  # Position the label above the queue
+            anchor_x="center",
+            anchor_y="center",
+            batch=self.batch,
+        )
+
+        # Timer label above the entry to show next arrival time
+        self.next_arrival_time_label = pyglet.text.Label(
+            "",
+            font_name="Arial",
+            font_size=14,
+            x=self.spawn_position.x,
+            y=self.spawn_position.y + 40,  # Position the label above the entry
+            anchor_x="center",
+            anchor_y="center",
+            batch=self.batch,
+        )
+
     def add_customer(self):
         """Add a new customer to the queue."""
         if self.queue.qsize() < self.settings.queue_max_size:  # Limit queue size
@@ -221,11 +246,17 @@ class MM1Queue:
                 self.settings.customer_color,
             )
             self.queue.put(customer)
+            # Reset the waiting time when a customer is added
+            self.waiting_time = 0.0
 
     def update(self, dt: float) -> None:
         """Update the queue system and move customers."""
-        # Handle customer arrivals
+        # Update the next arrival timer
         self.next_arrival_time -= dt
+        self.next_arrival_time_label.text = (
+            f"next: {self.next_arrival_time:.2f}s"
+        )
+
         if self.next_arrival_time <= 0:
             self.add_customer()
             self.next_arrival_time: float = random.expovariate(
@@ -260,6 +291,13 @@ class MM1Queue:
             if customer.move_toward(self.exit_position, dt, self.settings.move_speed):
                 # Remove customer once they reach the exit
                 self.exiting_customers.remove(customer)
+
+        # Update waiting time for customers in the queue
+        if not self.queue.empty():
+            self.waiting_time += dt
+            self.queue_waiting_time_label.text = (
+                f"waiting {self.waiting_time:.2f}s"
+            )
 
         # Update customers in the queue to move forward if needed
         for i in range(self.queue.qsize()):
