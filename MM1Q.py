@@ -34,6 +34,38 @@ def neg_exp(λ: int) -> float:
     return random.expovariate(λ)
 
 
+def simulation(
+    simulation_time: int, arrival_rate: int, service_rate: int
+) -> tuple[list[Customer], float]:
+    """Run the simulation and return the generated customers and the end time of the simulation"""
+    # Initialise clock
+    tick = 0
+
+    # Initialise empty list to hold all data
+    customers: list[Customer] = []
+
+    # ----------------------------------
+    # The actual simulation happens here:
+    while tick < simulation_time:
+        # calculate arrival date and service time for new customer
+        arrival_date = 0
+        if len(customers) == 0:
+            arrival_date = neg_exp(arrival_rate)
+            service_start_date = arrival_date
+        else:
+            arrival_date += neg_exp(arrival_rate)
+            service_start_date = max(arrival_date, customers[-1].service_end_date)
+        service_time = neg_exp(service_rate)
+
+        # create new customer
+        customers.append(Customer(arrival_date, service_start_date, service_time))
+
+        # increment clock till next end of service
+        tick += arrival_date
+    # ----------------------------------
+    return customers, tick
+
+
 def print_stats(customers: list[Customer], tick: float) -> None:
     # calculate summary statistics
     waits: list[float] = []
@@ -53,14 +85,19 @@ def print_stats(customers: list[Customer], tick: float) -> None:
     utilisation = sum(service_times) / tick
 
     # output summary statistics to screen
-    print("")
+    max_var_len = max(
+        len(f"{float(len(customers)):.2f}"),
+        len(f"{mean_service_time:.2f}"),
+        len(f"{mean_wait:.2f}"),
+        len(f"{mean_time:.2f}"),
+        len(f"{utilisation:.2f}"),
+    )
     print("Summary results:")
-    print("")
-    print(f"Number of customers: {len(customers)}")
-    print(f"Mean Service Time: {mean_service_time:.2f}")
-    print(f"Mean Wait: {mean_wait:.2f}")
-    print(f"Mean Time in System: {mean_time:.2f}")
-    print(f"Utilisation: {utilisation:.2f}")
+    print(f"  Number of customers: {float(len(customers)):>{max_var_len}.2f}")
+    print(f"  Mean Service Time:   {mean_service_time:>{max_var_len}.2f}")
+    print(f"  Mean Wait:           {mean_wait:>{max_var_len}.2f}")
+    print(f"  Mean Time in System: {mean_time:>{max_var_len}.2f}")
+    print(f"  Utilisation:         {utilisation:>{max_var_len}.2f}")
 
     print("")
 
@@ -101,38 +138,6 @@ def save_to_csv(
             )
 
 
-def simulation(
-    simulation_time: int, arrival_rate: int, service_rate: int
-) -> tuple[list[Customer], float]:
-    """Run the simulation and return the generated customers and the end time of the simulation"""
-    # Initialise clock
-    tick = 0
-
-    # Initialise empty list to hold all data
-    customers: list[Customer] = []
-
-    # ----------------------------------
-    # The actual simulation happens here:
-    while tick < simulation_time:
-        # calculate arrival date and service time for new customer
-        arrival_date = 0
-        if len(customers) == 0:
-            arrival_date = neg_exp(arrival_rate)
-            service_start_date = arrival_date
-        else:
-            arrival_date += neg_exp(arrival_rate)
-            service_start_date = max(arrival_date, customers[-1].service_end_date)
-        service_time = neg_exp(service_rate)
-
-        # create new customer
-        customers.append(Customer(arrival_date, service_start_date, service_time))
-
-        # increment clock till next end of service
-        tick = arrival_date
-    # ----------------------------------
-    return customers, tick
-
-
 def QSim(
     arrival_rate: int | None = None,
     service_rate: int | None = None,
@@ -158,12 +163,6 @@ def QSim(
     if output_file is None:
         output_file = bool(input("Output data to csv (True/False)? ")) or False
 
-    # type-check parameters, so we don't get type-hinting complaints
-    assert isinstance(arrival_rate, int)
-    assert isinstance(service_rate, int)
-    assert isinstance(simulation_time, int)
-    assert isinstance(output_file, bool)
-
     customers, tick = simulation(simulation_time, arrival_rate, service_rate)
 
     print_stats(customers, tick)
@@ -174,8 +173,10 @@ def QSim(
 
 # %%
 # run the simulation with some sane defaults
-QSim(arrival_rate=1, service_rate=2, simulation_time=10, output_file=False)
+QSim(arrival_rate=3, service_rate=2, simulation_time=1000, output_file=False)
 
 # %%
 # run the simulation and ask the user for parameters
 QSim()
+
+# %%
