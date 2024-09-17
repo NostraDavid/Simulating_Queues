@@ -5,7 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "ipykernel>=6.29.5",
     "matplotlib>=3.9.2",
+    "polars>=1.7.1",
 ]
 
 [tool.uv]
@@ -13,10 +15,11 @@ dev-dependencies = [
     "2to3>=1.0",
     "matplotlib-stubs>=0.2.0",
     "mypy>=1.11.2",
-    # sudo apt-get install python3 python3-pip python3-venv
+    "pip>=24.2",
     "pyre-check>=0.9.22",
     "ruff>=0.6.5",
 ]
 
+# sudo apt-get install python3 python3-pip python3-venv
 # sudo apt update
 # sudo apt install tk-dev tcl-dev python3-tk
