@@ -19,9 +19,9 @@ class SimulationSettings(BaseSettings):
     queue_max_size: int
     customer_radius: int
     queue_position_offset: int
-    queue_color: tuple[int, int, int]  # Now a tuple
-    server_color: tuple[int, int, int]  # Now a tuple
-    customer_color: tuple[int, int, int]  # Now a tuple
+    queue_color: tuple[int, int, int]
+    server_color: tuple[int, int, int]
+    customer_color: tuple[int, int, int]
 
     @classmethod
     def from_json(cls, json_file: str) -> "SimulationSettings":
@@ -87,7 +87,7 @@ class Customer:
         queue_position: Vector2D,
         radius: float,
         batch: pyglet.graphics.Batch,
-        color: Tuple[int],
+        color: tuple[int, int, int],
     ):
         self.position = spawn_position
         self.shape = shapes.Circle(
@@ -105,9 +105,13 @@ class Customer:
         distance = direction.magnitude()  # Calculate distance to target
 
         if distance > 0:
-            move_vector = (
-                direction.normalize() * move_speed * dt
-            )  # Move in the direction of the target
+            # Normalize the direction and calculate the move vector
+            move_vector = direction.normalize() * move_speed * dt
+
+            # If the move vector would overshoot the target, limit the movement to exactly reach the target
+            if move_vector.magnitude() > distance:
+                move_vector = direction  # Move the remaining distance to the target
+
             self.position += move_vector  # Update position
             self.shape.x, self.shape.y = self.position.x, self.position.y
 
