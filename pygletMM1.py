@@ -11,6 +11,7 @@ I need:
 - some vector to move stuff
 - a queue to hold customers
 """
+
 import pyglet
 import random
 import queue
@@ -149,12 +150,11 @@ class MM1Queue:
         self.settings = settings
         self.start_position = start_position  # Queue start position (Vector2D)
         self.end_position = end_position  # Queue end position (Vector2D)
-        # Enter the screen in the upper-left corner
         self.spawn_position = Vector2D(50, window_height - 50)
-        # Exit in the lower right corner
         self.exit_position = Vector2D(window_width - 50, 50)
         self.queue: queue.Queue[Customer] = queue.Queue()  # FIFO queue for customers
         self.server = None  # The customer currently being served
+        self.exiting_customers: list[Customer] = []  # List to hold customers moving to the exit
         self.batch = pyglet.graphics.Batch()  # Batch for efficient drawing
         self.next_arrival_time = random.expovariate(self.settings.arrival_rate)
         self.next_service_time = None
@@ -233,8 +233,16 @@ class MM1Queue:
             ):
                 self.next_service_time -= dt
                 if self.next_service_time <= 0:
-                    # Customer has been served
+                    # Customer has been served; now move to the exit
+                    self.server.target = self.exit_position
+                    self.exiting_customers.append(self.server)
                     self.server = None
+
+        # Update exiting customers moving toward the exit
+        for customer in self.exiting_customers[:]:  # Iterate over a copy of the list
+            if customer.move_toward(self.exit_position, dt, self.settings.move_speed):
+                # Remove customer once they reach the exit
+                self.exiting_customers.remove(customer)
 
         # Update customers in the queue to move forward if needed
         for i in range(self.queue.qsize()):
