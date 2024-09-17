@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from math import sqrt, atan2, degrees
 from pydantic_settings import SettingsConfigDict, BaseSettings
 import json
-from typing import Tuple
 
 
 # Step 1: Define Pydantic settings model
@@ -22,6 +21,8 @@ class SimulationSettings(BaseSettings):
     queue_color: tuple[int, int, int]
     server_color: tuple[int, int, int]
     customer_color: tuple[int, int, int]
+    entry_color: tuple[int, int, int]
+    exit_color: tuple[int, int, int]
 
     @classmethod
     def from_json(cls, json_file: str) -> "SimulationSettings":
@@ -31,6 +32,8 @@ class SimulationSettings(BaseSettings):
         settings_data["queue_color"] = tuple(settings_data["queue_color"])
         settings_data["server_color"] = tuple(settings_data["server_color"])
         settings_data["customer_color"] = tuple(settings_data["customer_color"])
+        settings_data["entry_color"] = tuple(settings_data["entry_color"])
+        settings_data["exit_color"] = tuple(settings_data["exit_color"])
         return cls(**settings_data)
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
@@ -126,15 +129,17 @@ class MM1Queue:
         self,
         start_position: Vector2D,
         end_position: Vector2D,
+        window_width: float,
         window_height: float,
         settings: SimulationSettings,
     ):
         self.settings = settings
         self.start_position = start_position  # Queue start position (Vector2D)
         self.end_position = end_position  # Queue end position (Vector2D)
-        self.spawn_position = Vector2D(
-            0, window_height
-        )  # Spawn in the upper-left corner
+        # Enter the screen in the upper-left corner
+        self.spawn_position = Vector2D(50, window_height - 50)
+        # Exit in the lower right corner
+        self.exit_position = Vector2D(window_width - 50, 50)
         self.queue: queue.Queue[Customer] = queue.Queue()  # FIFO queue for customers
         self.server = None  # The customer currently being served
         self.batch = pyglet.graphics.Batch()  # Batch for efficient drawing
@@ -158,6 +163,22 @@ class MM1Queue:
             color=self.settings.server_color,
             batch=self.batch,
         )
+        self.entry_box = shapes.Rectangle(
+            self.spawn_position.x - 25,
+            self.spawn_position.y - 25,
+            50,
+            50,
+            color=self.settings.entry_color,
+            batch=self.batch,
+        )
+        self.exit_box = shapes.Rectangle(
+            self.exit_position.x - 25,
+            self.exit_position.y - 25,
+            50,
+            50,
+            color=self.settings.exit_color,
+            batch=self.batch,
+        )
 
     def add_customer(self):
         """Add a new customer to the queue."""
@@ -176,13 +197,15 @@ class MM1Queue:
             )
             self.queue.put(customer)
 
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update the queue system and move customers."""
         # Handle customer arrivals
         self.next_arrival_time -= dt
         if self.next_arrival_time <= 0:
             self.add_customer()
-            self.next_arrival_time = random.expovariate(self.settings.arrival_rate)
+            self.next_arrival_time: float = random.expovariate(
+                self.settings.arrival_rate
+            )
 
         # Handle serving customers
         if self.server is None and not self.queue.empty():
@@ -233,6 +256,7 @@ class QueueSimulation:
         self.queue_system = MM1Queue(
             start_position,
             end_position,
+            window_width,
             window_height,
             settings,
         )

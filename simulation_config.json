@@ -4,10 +4,12 @@
   "move_speed": 200,
   "window_width": 1280,
   "window_height": 720,
-  "queue_max_size": 10,
+  "queue_max_size": 6,
   "customer_radius": 20,
   "queue_position_offset": 50,
   "queue_color": [255, 0, 0],
   "server_color": [0, 255, 0],
-  "customer_color": [0, 0, 255]
+  "customer_color": [0, 0, 255],
+  "entry_color": [0, 255, 255],
+  "exit_color": [255, 255, 0]
 }
