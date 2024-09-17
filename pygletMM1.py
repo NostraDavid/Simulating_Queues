@@ -302,7 +302,7 @@ class MM1Queue:
 
         # Update customers in the queue to move forward if needed
         for i in range(self.queue.qsize()):
-            customer = self.queue.queue[i]
+            customer: Customer = self.queue.queue[i]
             customer.target = Vector2D(
                 self.start_position.x - i * self.settings.queue_position_offset,
                 self.start_position.y,
