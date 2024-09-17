@@ -1,0 +1,12 @@
+/*
+
+# files
+!.gitignore
+!.pyre_configuration
+!.python-version
+!*.py
+!pyproject.toml
+!uv.lock
+
+# folders
+!Images/
