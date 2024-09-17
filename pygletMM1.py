@@ -87,15 +87,12 @@ class MM1Queue:
 
     def __init__(
         self,
-        start_x: float,
-        end_x: float,
-        y: float,
+        start_position: Vector2D,
+        end_position: Vector2D,
         window_height: float,
     ):
-        self.start_position = Vector2D(
-            start_x, window_height - y
-        )  # Position of the queue
-        self.end_position = Vector2D(end_x, window_height - y)  # Server position
+        self.start_position = start_position  # Queue start position (Vector2D)
+        self.end_position = end_position  # Queue end position (Vector2D)
         self.spawn_position = Vector2D(
             0, window_height
         )  # Spawn in the upper-left corner
@@ -172,7 +169,10 @@ class QueueSimulationWindow(pyglet.window.Window):
 
     def __init__(self, start_x: float, end_x: float, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.queue_system = MM1Queue(start_x, end_x, self.height // 2, self.height)
+        window_height = self.height
+        start_position = Vector2D(start_x, window_height // 2)
+        end_position = Vector2D(end_x, window_height // 2)
+        self.queue_system = MM1Queue(start_position, end_position, window_height)
 
     def on_draw(self):
         self.clear()
