@@ -179,7 +179,7 @@ def QSim(
 
 # %%
 # run the simulation with some sane defaults
-QSim(arrival_rate=3, service_rate=2, simulation_time=1000, output_file=False)
+QSim(arrival_rate=3, service_rate=2, simulation_time=1000, output_file=True)
 
 # %%
 # run the simulation and ask the user for parameters
