@@ -9,6 +9,7 @@
 !uv.lock
 # config file for pygletMM1
 !simulation_config.json
+!*.ipynb
 
 # folders
 !Images/
