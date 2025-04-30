@@ -110,9 +110,9 @@ class Customer:
     ):
         self.position = spawn_position
         self.shape = shapes.Circle(
-            spawn_position.x,
-            spawn_position.y,
-            radius,
+            x=spawn_position.x,
+            y=spawn_position.y,
+            radius=radius,
             color=color,
             batch=batch,
         )
