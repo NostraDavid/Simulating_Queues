@@ -659,7 +659,7 @@ class Sim:
         Outputs: NA
         """
         sys.stdout.write(
-            f"\r{100*t/self.simulation_time:.2f}% of simulation completed (t={t} of {self.simulation_time})"
+            f"\r{100 * t / self.simulation_time:.2f}% of simulation completed (t={t} of {self.simulation_time})"
         )
         sys.stdout.flush()
 
@@ -753,13 +753,13 @@ class Sim:
             selfish_system_states: Sequence[float] = []
             optimal_system_states: Sequence[float] = []
             time_points: Sequence[float] = []
-            assert isinstance(
-                self.system_state_dict, dict
-            ), "self.system_state_dict is not a dict"
+            assert isinstance(self.system_state_dict, dict), (
+                "self.system_state_dict is not a dict"
+            )
             for t in self.queue_length_dict:
-                assert isinstance(
-                    self.system_state_dict[t], list
-                ), "self.system_state_dict[t] is not a list"
+                assert isinstance(self.system_state_dict[t], list), (
+                    "self.system_state_dict[t] is not a list"
+                )
                 if t >= warmup:
                     selfish_queue_lengths.append(self.queue_length_dict[t][0])
                     optimal_queue_lengths.append(self.queue_length_dict[t][1])
@@ -877,9 +877,9 @@ class Sim:
                     else:
                         self.optimal_prob_balk += 1
 
-            assert isinstance(
-                self.cost_of_balking, list
-            ), "self.cost_of_balking is not a list"
+            assert isinstance(self.cost_of_balking, list), (
+                "self.cost_of_balking is not a list"
+            )
             self.mean_selfish_cost: float | bool = (
                 self.selfish_prob_balk * self.cost_of_balking[1]
                 + sum(self.selfish_service_times)

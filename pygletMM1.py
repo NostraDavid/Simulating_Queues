@@ -340,8 +340,12 @@ class QueueSimulation:
         )
 
         # Calculate the position to center the window on the selected screen
-        window_x = selected_screen.x + (selected_screen.width - settings.window_width) // 2
-        window_y = selected_screen.y + (selected_screen.height - settings.window_height) // 2
+        window_x = (
+            selected_screen.x + (selected_screen.width - settings.window_width) // 2
+        )
+        window_y = (
+            selected_screen.y + (selected_screen.height - settings.window_height) // 2
+        )
 
         # Set the window's location to the center of the selected screen
         self.window.set_location(window_x, window_y)
